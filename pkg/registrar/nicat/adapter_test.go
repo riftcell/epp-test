@@ -17,9 +17,9 @@ import (
 
 	"github.com/riftcell/epp-test/pkg/config"
 	epp_mock "github.com/riftcell/epp-test/pkg/mock/epp"
+	"github.com/riftcell/epp-test/pkg/registrar"
 	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 	"github.com/riftcell/epp-test/pkg/registrar/nicat"
-	"github.com/riftcell/epp-test/pkg/registrar"
 )
 
 func TestMain(m *testing.M) {

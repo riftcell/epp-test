@@ -1,0 +1,87 @@
+# CI runs the offline, `unit`-tagged test suite only. The integration suite
+# requires OT&E credentials and network access to real registrar sandboxes,
+# so it is deliberately excluded from this workflow — run it locally or in a
+# separate credentialed pipeline (see README.md for the local command).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - run: go mod download
+
+      - run: make build
+
+      - run: make vet
+
+      - run: make test
+
+      - run: make test-unit
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-reports
+          path: scenarios/conformance/reports/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - run: make lint
+
+      - name: Fail if `make lint` reformatted any file
+        run: git diff --exit-code
+
+  govulncheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - run: make govulncheck

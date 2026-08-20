@@ -18,11 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"github.com/riftcell/epp-test/pkg/config"
-	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
-	"github.com/riftcell/epp-test/pkg/registrar"
-	epp_mock "github.com/riftcell/epp-test/pkg/mock/epp"
 	nbioxml "github.com/nbio/xml"
+
+	"github.com/riftcell/epp-test/pkg/config"
+	epp_mock "github.com/riftcell/epp-test/pkg/mock/epp"
+	"github.com/riftcell/epp-test/pkg/registrar"
+	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 )
 
 // TestMain enables goroutine leak detection for the entire test binary.
@@ -273,7 +274,7 @@ func TestCreateDomain_HookCalledOnce(t *testing.T) {
 	srv.Expect <- successXML
 
 	hookCallCount := 0
-	adapter.OnBuildDomainCreate = func(req registrar.DomainCreateRequest, enc *nbioxml.Encoder) {
+	adapter.OnBuildDomainCreate = func(_ registrar.DomainCreateRequest, enc *nbioxml.Encoder) {
 		hookCallCount++
 		// Write a sentinel extension element so we can assert it lands in the frame.
 		_ = enc.EncodeToken(nbioxml.StartElement{
@@ -415,9 +416,6 @@ func TestPollRead_EmptyQueue(t *testing.T) {
 
 // Ensure the Greeting XML parses correctly (sanity check for the test constant).
 func TestGreetingXMLParsesCorrectly(t *testing.T) {
-	type GreetingCheck struct {
-		XMLName interface{} `xml:"urn:ietf:params:xml:ns:epp-1.0 epp"`
-	}
 	// Quick check: the XML is valid.
 	var g struct {
 		XMLName interface{} `xml:"epp"`

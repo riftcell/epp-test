@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/riftcell/epp-test/pkg/config"
-	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 	"github.com/riftcell/epp-test/pkg/registrar"
+	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 )
 
 // ---- XML response templates for additional operations ----

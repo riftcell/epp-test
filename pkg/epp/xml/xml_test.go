@@ -6,10 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	eppxml "github.com/riftcell/epp-test/pkg/epp/xml"
 	"github.com/nbio/xml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	eppxml "github.com/riftcell/epp-test/pkg/epp/xml"
 )
 
 // TestDomainCreateMarshalPrefix verifies that marshaling a DomainCreateCommand

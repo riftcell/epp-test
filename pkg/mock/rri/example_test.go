@@ -15,7 +15,7 @@ type exampleStub struct {
 	cleanups []func()
 }
 
-func (s *exampleStub) Helper() {}
+func (s *exampleStub) Helper()           {}
 func (s *exampleStub) Fatal(args ...any) { panic(fmt.Sprint(args...)) }
 func (s *exampleStub) Cleanup(f func())  { s.cleanups = append(s.cleanups, f) }
 func (s *exampleStub) runCleanup() {

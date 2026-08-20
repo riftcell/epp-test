@@ -1,5 +1,7 @@
 # EPP Test Framework
 
+[![CI](https://github.com/riftcell/epp-test/actions/workflows/ci.yml/badge.svg)](https://github.com/riftcell/epp-test/actions/workflows/ci.yml)
+
 A Go test framework for EPP (Extensible Provisioning Protocol) client libraries, with first-class support for InternetX, NiCAT, EURid, and DENIC. Covers the full EPP operation surface — domains, contacts, hosts, polling — plus DENIC's proprietary text-based RRI protocol. Tests run locally against in-process mock servers and against OT&E/sandbox environments using the same test code and without any changes to configuration.
 
 **Core value:** Give EPP client developers fast, reliable, locally-runnable tests that also work against real registrar environments. Write a scenario once; run it offline against a mock server or live against an OT&E endpoint by switching a config file.
@@ -45,6 +47,23 @@ go test -tags unit ./...
 | `go test -tags integration ./...` | Integration suite against OT&E endpoints (requires credentials) |
 
 See [How-To: Integration Testing](docs/how-to-integration-testing.md) for a detailed walkthrough of all three tiers, including Docker Compose examples.
+
+## Continuous Integration
+
+Every push and pull request to `main` runs the CI workflow defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Each CI step has a local equivalent so a red build can be reproduced without reading the YAML:
+
+| CI step | Local command |
+| ------- | ------------- |
+| Build | `make build` |
+| Vet | `make vet` |
+| Compile check | `make test` |
+| Unit tests | `make test-unit` |
+| Lint | `make lint` |
+| Vulnerability scan | `make govulncheck` |
+
+CI runs only the offline `unit`-tagged suite against in-process mock servers. Integration tests (`make test-integration`, `./run-integration.sh`) are **not** run in CI because they need OT&E credentials and network access to registrar sandboxes; run them locally or in a separate credentialed pipeline.
+
+Unit test reports (`junit.xml`, `report.json`, `report.txt`, `report.html`) are uploaded as the `unit-test-reports` artifact on every run, including failures.
 
 ## Module Path
 

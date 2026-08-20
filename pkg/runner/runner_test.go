@@ -18,9 +18,9 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/riftcell/epp-test/pkg/config"
-	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 	epp_mock "github.com/riftcell/epp-test/pkg/mock/epp"
 	"github.com/riftcell/epp-test/pkg/registrar"
+	epp "github.com/riftcell/epp-test/pkg/registrar/epp"
 	"github.com/riftcell/epp-test/pkg/runner"
 )
 
@@ -105,14 +105,6 @@ var contactCreateXML = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="
       </contact:creData>
     </resData>
     <trID><clTRID>gsd-test-5</clTRID><svTRID>mock-svtrid-005</svTRID></trID>
-  </response>
-</epp>`)
-
-var error2302XML = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
-  <response>
-    <result code="2302"><msg>Object exists</msg></result>
-    <trID><clTRID>gsd-test-6</clTRID><svTRID>mock-svtrid-006</svTRID></trID>
   </response>
 </epp>`)
 

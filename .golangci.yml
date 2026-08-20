@@ -61,4 +61,7 @@ formatters:
         - github.com/riftcell/epp-test
 
 issues:
-  max-same-issues: 10
+  # 0 = no cap. A cap here hides real findings: max-same-issues: 10 previously
+  # truncated the goimports list from 13 files to 10.
+  max-same-issues: 0
+  max-issues-per-linter: 0

@@ -59,10 +59,10 @@ func TestConcurrentAppend(t *testing.T) {
 	wg.Add(goroutines)
 
 	for i := 0; i < goroutines; i++ {
-		go func(idx int) {
+		go func() {
 			defer wg.Done()
 			Append(ScenarioResult{Name: "concurrent", Passed: true})
-		}(i)
+		}()
 	}
 
 	wg.Wait()

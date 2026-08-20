@@ -150,17 +150,6 @@ var pollEmptyXML = []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?
   </response>
 </epp>`)
 
-// buildErrorXML returns a minimal EPP error response for the given result code.
-func buildErrorXML(code int, msg string) []byte {
-	return []byte(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>` +
-		`<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">` +
-		`<response>` +
-		`<result code="` + strconv.Itoa(code) + `"><msg>` + msg + `</msg></result>` +
-		`<trID><clTRID>conf-err</clTRID><svTRID>mock-err</svTRID></trID>` +
-		`</response>` +
-		`</epp>`)
-}
-
 // ---- Test helpers ----
 
 // newAdapter creates a MockEPPServer and a GenericEPPAdapter named "internetx"
@@ -227,7 +216,8 @@ func scriptLogin(t *testing.T, srv *epp_mock.MockEPPServer, adapter *epp.Generic
 //  7. transfer_domain     → successXML
 //  8. delete_domain       → successXML (explicit step)
 //  9. cleanup delete_domain → successXML (t.Cleanup for create_domain)
-// 10. cleanup delete_contact → successXML (t.Cleanup for create_contact)
+//
+// 10. cleanup delete_contact → successXML (t.Cleanup for create_contact).
 func TestDomainLifecycle(t *testing.T) {
 	adapter, srv := newAdapter(t)
 	scriptLogin(t, srv, adapter)
@@ -287,11 +277,11 @@ func TestHostLifecycle(t *testing.T) {
 	adapter, srv := newAdapter(t)
 	scriptLogin(t, srv, adapter)
 
-	srv.Expect <- successXML // 1. create_host
+	srv.Expect <- successXML  // 1. create_host
 	srv.Expect <- hostInfoXML // 2. info_host (Name assertion)
-	srv.Expect <- successXML // 3. update_host
-	srv.Expect <- successXML // 4. delete_host (explicit)
-	srv.Expect <- successXML // 5. cleanup: delete_host
+	srv.Expect <- successXML  // 3. update_host
+	srv.Expect <- successXML  // 4. delete_host (explicit)
+	srv.Expect <- successXML  // 5. cleanup: delete_host
 
 	runner.RunScenario(t, "host_lifecycle.yaml", adapter)
 }
@@ -339,8 +329,8 @@ func TestNegativeScenarios(t *testing.T) {
 	srv.Expect <- epp_mock.WrongResultCodeFault{Code: 2303} // 2. not_found_info → object does not exist
 	srv.Expect <- epp_mock.WrongResultCodeFault{Code: 2201} // 3. auth_error → authorization error
 	srv.Expect <- epp_mock.WrongResultCodeFault{Code: 2306} // 4. bad_param → parameter value policy error
-	srv.Expect <- successXML                                 // 5. cleanup: delete_domain (bad_param)
-	srv.Expect <- successXML                                 // 6. cleanup: delete_domain (duplicate_create)
+	srv.Expect <- successXML                                // 5. cleanup: delete_domain (bad_param)
+	srv.Expect <- successXML                                // 6. cleanup: delete_domain (duplicate_create)
 
 	runner.RunScenario(t, "negative_tests.yaml", adapter)
 }

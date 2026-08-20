@@ -18,23 +18,23 @@ type extendedStub struct {
 	stubRegistrar
 
 	// domain ops
-	updateDomainCalled bool
-	updateDomainReq    registrar.DomainUpdateRequest
-	deleteDomainCalled bool
-	deleteDomainName   string
-	renewDomainCalled  bool
-	renewDomainName    string
-	renewDomainYears   int
-	renewDomainResult  registrar.DomainResult
+	updateDomainCalled   bool
+	updateDomainReq      registrar.DomainUpdateRequest
+	deleteDomainCalled   bool
+	deleteDomainName     string
+	renewDomainCalled    bool
+	renewDomainName      string
+	renewDomainYears     int
+	renewDomainResult    registrar.DomainResult
 	transferDomainCalled bool
 	transferDomainReq    registrar.DomainTransferRequest
 
 	// contact ops
-	checkContactCalled bool
-	checkContactIDs    []string
-	infoContactCalled  bool
-	infoContactID      string
-	infoContactResult  registrar.ContactResult
+	checkContactCalled  bool
+	checkContactIDs     []string
+	infoContactCalled   bool
+	infoContactID       string
+	infoContactResult   registrar.ContactResult
 	updateContactCalled bool
 	updateContactReq    registrar.ContactUpdateRequest
 	deleteContactCalled bool
@@ -54,10 +54,10 @@ type extendedStub struct {
 	deleteHostName   string
 
 	// poll ops
-	pollReadCalled  bool
-	pollReadResult  registrar.PollMessage
-	pollAckCalled   bool
-	pollAckMsgID    string
+	pollReadCalled bool
+	pollReadResult registrar.PollMessage
+	pollAckCalled  bool
+	pollAckMsgID   string
 
 	// session ops
 	loginCalled  bool
@@ -178,7 +178,7 @@ func (s *extendedStub) Ping(_ context.Context) error {
 	return nil
 }
 
-// compile-time check
+// compile-time check.
 var _ registrar.Registrar = (*extendedStub)(nil)
 
 // ---- intParam tests ----

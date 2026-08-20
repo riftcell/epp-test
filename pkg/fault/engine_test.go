@@ -31,7 +31,7 @@ func TestParseDurations(t *testing.T) {
 		{
 			name:    "valid connect_delay 2s",
 			profile: fault.FaultProfile{ConnectDelay: "2s"},
-			check: func(t *testing.T, p fault.FaultProfile) {
+			check: func(t *testing.T, _ fault.FaultProfile) {
 				t.Helper()
 				// Verify round-trip: parse then call OnConnect on a zero-delay engine should not sleep.
 				// We confirm no error was returned (the duration parsed correctly).
@@ -105,9 +105,9 @@ func TestOnLoginAttemptModes(t *testing.T) {
 			wantActions: []fault.FaultAction{fault.ActionDeny, fault.ActionDeny, fault.ActionDeny},
 		},
 		{
-			name:           "flap - first two fail then allow",
-			profile:        fault.FaultProfile{LoginMode: "flap", LoginFailCount: 2},
-			wantActions:    []fault.FaultAction{fault.ActionDeny, fault.ActionDeny, fault.ActionAllow},
+			name:        "flap - first two fail then allow",
+			profile:     fault.FaultProfile{LoginMode: "flap", LoginFailCount: 2},
+			wantActions: []fault.FaultAction{fault.ActionDeny, fault.ActionDeny, fault.ActionAllow},
 		},
 		{
 			name:        "hang mode returns hang",
@@ -166,9 +166,9 @@ func TestOnConnectPreGreeting(t *testing.T) {
 
 func TestAfterGreeting(t *testing.T) {
 	tests := []struct {
-		name        string
+		name         string
 		disconnectAt string
-		want        fault.FaultAction
+		want         fault.FaultAction
 	}{
 		{
 			name:         "post-greeting returns disconnect",

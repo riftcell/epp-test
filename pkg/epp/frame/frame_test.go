@@ -7,9 +7,10 @@ import (
 	"io"
 	"testing"
 
-	"github.com/riftcell/epp-test/pkg/epp/frame"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/riftcell/epp-test/pkg/epp/frame"
 )
 
 // TestWriteFrameHeader verifies RFC 5734 framing: WriteFrame of a 100-byte payload
@@ -101,10 +102,10 @@ func TestReadFrameTruncatedBody(t *testing.T) {
 // (header value 4, zero body bytes per RFC 5734).
 func TestReadWriteRoundTrip(t *testing.T) {
 	payloads := [][]byte{
-		{},                                          // empty payload: header = 4, zero body bytes
-		{0x01, 0x02, 0x03},                          // short payload
-		[]byte("<?xml version=\"1.0\"?><epp/>"),     // XML-like
-		make([]byte, 100),                            // 100-byte payload: header = 104
+		{},                                      // empty payload: header = 4, zero body bytes
+		{0x01, 0x02, 0x03},                      // short payload
+		[]byte("<?xml version=\"1.0\"?><epp/>"), // XML-like
+		make([]byte, 100),                       // 100-byte payload: header = 104
 		make([]byte, 65535),
 	}
 	for i, p := range payloads {

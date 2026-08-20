@@ -41,7 +41,6 @@ func TestOTEReachability(t *testing.T) {
 	}
 
 	for name, rc := range cfg.Registrars {
-		name, rc := name, rc // capture loop vars
 		t.Run(name, func(t *testing.T) {
 			skipIfUnreachable(t, rc.Host, rc.Port)
 		})

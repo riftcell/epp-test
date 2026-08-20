@@ -1,6 +1,6 @@
-.PHONY: all test test-unit test-integration lint lint-fix build tidy clean docker-build docker-run docker-test docker-selftest mock-epp-server mock-rri-server
+.PHONY: all test test-unit test-integration vet fmt lint lint-fix govulncheck build tidy clean docker-build docker-run docker-test docker-selftest mock-epp-server mock-rri-server
 
-all: lint test-unit build
+all: lint vet test-unit build
 
 # Run untagged tests — validates the module compiles cleanly.
 # No untagged test files exist yet; this target should exit 0 with "no test files".
@@ -18,13 +18,44 @@ test-unit:
 test-integration:
 	go test -tags integration -run 'Test$(REGISTRAR)' -timeout 30m -v ./...
 
-# Lint all packages. Requires golangci-lint in PATH.
-# Install: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
-lint:
-	golangci-lint run ./...
+# Vet all packages in every build mode.
+# Untagged vet skips tagged test files, so unit and integration are vetted
+# explicitly — this type-checks integration tests without executing them.
+vet:
+	go vet ./...
+	go vet -tags unit ./...
+	go vet -tags integration ./...
 
-lint-fix:
+# Format all Go files, including those behind //go:build unit / integration tags.
+# `lint` depends on this so formatting drift is corrected before linting runs.
+fmt:
+	go fmt ./...
+
+# Lint all packages in every build mode. Requires golangci-lint in PATH.
+# Untagged lint skips tagged test files entirely (reporting a misleading "0 issues"),
+# so unit and integration are linted explicitly — same gap `vet` closes above.
+# Install: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
+lint: fmt
+	golangci-lint run ./...
+	golangci-lint run --build-tags=unit ./...
+	golangci-lint run --build-tags=integration ./...
+
+lint-fix: fmt
 	golangci-lint run --fix ./...
+	golangci-lint run --build-tags=unit --fix ./...
+	golangci-lint run --build-tags=integration --fix ./...
+
+# Scan the module for known vulnerabilities. Requires govulncheck in PATH.
+# govulncheck's -test flag defaults to false, so a bare scan skips every //go:build unit
+# and //go:build integration test file — the same blind spot `vet` and `lint` close above.
+# This is a test framework: the tagged test files are the product, so they are scanned too.
+# Not wired into `all` — this target reaches vuln.go.dev over the network, and `all` must
+# stay runnable offline.
+# Install: go install golang.org/x/vuln/cmd/govulncheck@latest
+govulncheck:
+	govulncheck ./...
+	govulncheck -test -tags unit ./...
+	govulncheck -test -tags integration ./...
 
 # Build all packages as a static binary (verifies CGO_ENABLED=0 constraint, INFRA-03).
 build:

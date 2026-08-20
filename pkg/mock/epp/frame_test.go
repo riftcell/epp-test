@@ -13,7 +13,7 @@ import (
 )
 
 // TestWriteFrameHeader verifies the RFC 5734 invariant:
-// totalLength = 4 (header) + len(payload)
+// totalLength = 4 (header) + len(payload).
 func TestWriteFrameHeader(t *testing.T) {
 	tests := []struct {
 		name       string

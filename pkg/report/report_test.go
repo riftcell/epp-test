@@ -11,9 +11,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/riftcell/epp-test/pkg/runner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/riftcell/epp-test/pkg/runner"
 )
 
 // testResults returns a small slice of ScenarioResult for use in all tests.
