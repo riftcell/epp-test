@@ -34,7 +34,7 @@ fmt:
 # Lint all packages in every build mode. Requires golangci-lint in PATH.
 # Untagged lint skips tagged test files entirely (reporting a misleading "0 issues"),
 # so unit and integration are linted explicitly — same gap `vet` closes above.
-# Install: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
+# Install: curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
 lint: fmt
 	golangci-lint run ./...
 	golangci-lint run --build-tags=unit ./...
