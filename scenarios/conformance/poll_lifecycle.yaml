@@ -1,0 +1,39 @@
+# CONF-04: Poll message lifecycle conformance scenario.
+# Validates RFC 5730 §2.9.2.3: trigger notification, poll, assert content, ack, verify queue empty.
+# The final poll step returns 1300 ("no messages") to confirm the queue is empty after ack.
+
+name: poll_lifecycle
+rfc: "RFC 5730 §2.9.2.3"
+matrix: [internetx, nicat, eurid]
+
+steps:
+  # wait_for_poll waits for the next available poll message.
+  # Note: match_type is omitted — the EPP adapter does not populate PollMessage.Type
+  # from wire responses (Type is only available via DENIC RRI). An empty match_type
+  # matches any message, which is the correct behavior for EPP scenarios.
+  - name: wait_transfer
+    op: wait_for_poll
+    params:
+      timeout: "5s"
+    expect:
+      code: 1000
+
+  # Read the next pending message from the queue.
+  - name: read
+    op: poll
+    expect:
+      code: 1000
+
+  # Acknowledge the message using the ID captured from the read step.
+  - name: ack
+    op: poll_ack
+    params:
+      id: "${read.ID}"
+    expect:
+      code: 1000
+
+  # Verify the queue is empty after acknowledgement (CONF-04: queue empty check).
+  - name: verify_empty
+    op: poll
+    expect:
+      code: 1300

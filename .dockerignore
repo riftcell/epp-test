@@ -1,0 +1,21 @@
+# Exclude version control metadata — not needed for build.
+.git
+
+# Exclude planning and documentation artifacts — reduces build context size.
+.planning
+*.md
+
+# Exclude IDE/tool configuration — not part of the Go source tree.
+.claude
+.idea
+.vscode
+
+# Exclude report output directories — generated at runtime, not build time.
+reports
+scratchpad
+mock-epp-server
+mock-rri-server
+
+# Exclude Docker build files themselves — no need to copy these into the image.
+Dockerfile
+.dockerignore

@@ -1,0 +1,51 @@
+# epp-test.yaml — EPP Test Framework Configuration
+#
+# Copy this file to epp-test.yaml and fill in your OT&E credentials.
+# Never commit epp-test.yaml with real credentials — use environment variable
+# overrides for CI:
+#
+#   EPP_REGISTRARS_INTERNETX_PASSWORD=secret go test -tags integration -run TestInternetX ./...
+#
+# Environment variable format:
+#   EPP_REGISTRARS_<NAME>_<FIELD>
+#   where <NAME> and <FIELD> are uppercase with underscores replacing dots.
+
+registrars:
+  internetx:
+    host: epp.internetx.de
+    port: 700
+    username: test-user
+    password: secret
+    cert_file: /certs/internetx/client.pem
+    key_file: /certs/internetx/client.key
+    ca_file: /certs/internetx/ca.pem
+    extensions:
+      - urn:ietf:params:xml:ns:domain-1.0
+      - urn:ietf:params:xml:ns:contact-1.0
+      - urn:ietf:params:xml:ns:host-1.0
+
+  nicat:
+    host: epp.nic.at
+    port: 700
+    username: nic-user
+    password: nic-secret
+    cert_file: /certs/nicat/client.pem
+    key_file: /certs/nicat/client.key
+    extensions:
+      - http://www.nic.at/xsd/at-ext-verification-1.0
+
+  eurid:
+    host: epp.eurid.eu
+    port: 700
+    username: eurid-user
+    password: eurid-secret
+    extensions:
+      - http://www.eurid.eu/xml/epp/contact-ext-1.3
+      - http://www.eurid.eu/xml/epp/domain-ext-2.4
+
+  denic:
+    host: epp.denic.de
+    port: 700
+    username: denic-user
+    password: denic-secret
+    extensions: []

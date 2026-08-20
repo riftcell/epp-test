@@ -1,0 +1,68 @@
+# CONF-02: Standard contact lifecycle conformance scenario.
+# Validates RFC 5733 §3.2 contact operations: create, info, update, delete.
+# The contact is also associated with a domain as its registrant (CONF-02 requirement).
+# The domain is deleted before the contact to satisfy referential integrity.
+
+name: contact_lifecycle
+rfc: "RFC 5733 §3.2"
+matrix: [internetx, nicat, eurid]
+
+steps:
+  - name: create_contact
+    op: create_contact
+    params:
+      name: "Test User"
+      org: "Test Org"
+      email: "test@example.com"
+      street: ["1 Test St"]
+      city: "Vienna"
+      state_province: "W"
+      postal_code: "1010"
+      country_code: "AT"
+      phone: "+43.1234567"
+      auth_info: "cAuth1"
+    expect:
+      code: 1000
+
+  - name: info_contact
+    op: info_contact
+    params:
+      id: "${create_contact.ID}"
+    expect:
+      code: 1000
+      fields:
+        Email: "test@example.com"
+
+  - name: update_contact
+    op: update_contact
+    params:
+      id: "${create_contact.ID}"
+      email: "new@example.com"
+    expect:
+      code: 1000
+
+  # Associate the contact with a domain as its registrant (CONF-02: contact-domain association).
+  - name: create_domain
+    op: create_domain
+    params:
+      name: contact-assoc.example
+      registrant: "${create_contact.ID}"
+      period: 1
+      auth_info: "domAuth01"
+    expect:
+      code: 1000
+
+  # Remove the domain before its registrant contact (referential integrity).
+  - name: delete_domain
+    op: delete_domain
+    params:
+      name: contact-assoc.example
+    expect:
+      code: 1000
+
+  - name: delete_contact
+    op: delete_contact
+    params:
+      id: "${create_contact.ID}"
+    expect:
+      code: 1000

@@ -1,0 +1,64 @@
+version: "2"
+
+run:
+  timeout: 5m
+  relative-path-mode: cfg
+
+linters:
+  default: standard
+  enable:
+    # Error handling
+    - errname        # error type naming: types must end in Error, not Err
+    - errorlint      # common mistakes with Go 1.13+ error wrapping
+    - wrapcheck      # errors from external packages must be wrapped
+
+    # Code correctness
+    - nilerr         # detects returning nil where err is not nil
+    - nilnil         # detects simultaneous nil error + nil value return
+    - exhaustive     # checks exhaustiveness of enum switches
+
+    # Style and maintainability
+    - revive         # idiomatic Go style (replaces golint)
+    - godot          # comments must end with a period
+    - whitespace     # trailing whitespace detection
+
+    # Go-specific
+    - copyloopvar    # loop variable capture (relevant even with Go 1.25 range fix)
+    - contextcheck   # context usage patterns
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    revive:
+      enable-default-rules: true
+      rules:
+        - name: exported
+          arguments:
+            - disableStutteringCheck
+
+    wrapcheck:
+      ignorePackageGlobs:
+        - "github.com/riftcell/epp-test/*"
+
+    exhaustive:
+      default-signifies-exhaustive: true
+
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters:
+          - errcheck
+          - wrapcheck
+
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/riftcell/epp-test
+
+issues:
+  max-same-issues: 10

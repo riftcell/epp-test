@@ -1,0 +1,9 @@
+.planning/
+.claude/
+.idea/
+.vscode/
+/mock-epp-server
+/mock-rri-server
+scratchpad/
+epp-test.yaml
+scenarios/conformance/reports/

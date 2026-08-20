@@ -1,0 +1,85 @@
+# CONF-01: Standard domain lifecycle conformance scenario.
+# Validates RFC 5731 §3.2 domain operations: check, create, info, update, renew, transfer, delete.
+# A contact is created first so the domain's registrant field can be set.
+# The nicat override on the "create" step demonstrates D-07 deep-merge.
+
+name: domain_lifecycle
+rfc: "RFC 5731 §3.2"
+matrix: [internetx, nicat, eurid]
+
+steps:
+  - name: check
+    op: check_domain
+    params:
+      names: [conformance.example]
+    expect:
+      code: 1000
+      fields:
+        available: true
+
+  - name: create_contact
+    op: create_contact
+    params:
+      name: "Test User"
+      email: "test@example.com"
+      auth_info: "authTest123"
+    expect:
+      code: 1000
+
+  - name: create
+    op: create_domain
+    params:
+      name: conformance.example
+      registrant: "${create_contact.ID}"
+      period: 1
+      auth_info: "domAuth99"
+    expect:
+      code: 1000
+
+  - name: info
+    op: info_domain
+    params:
+      name: conformance.example
+    expect:
+      code: 1000
+      fields:
+        Name: conformance.example
+
+  - name: update
+    op: update_domain
+    params:
+      name: conformance.example
+      add_statuses: [clientHold]
+    expect:
+      code: 1000
+
+  - name: renew
+    op: renew_domain
+    params:
+      name: conformance.example
+      years: 1
+    expect:
+      code: 1000
+
+  - name: transfer
+    op: transfer_domain
+    params:
+      name: conformance.example
+      op: query
+    expect:
+      code: 1000
+
+  - name: delete
+    op: delete_domain
+    params:
+      name: conformance.example
+    expect:
+      code: 1000
+
+overrides:
+  nicat:
+    steps:
+      create:
+        params:
+          extensions:
+            verification_level: owner

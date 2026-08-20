@@ -1,0 +1,60 @@
+# CONF-05: DENIC RRI domain conformance scenario.
+# Validates DENIC RRI-specific domain operations (not EPP XML).
+# TransferDomain op mapping: request→TRANSIT, authinfo1→CREATE-AUTHINFO1, authinfo2→CREATE-AUTHINFO2
+# (per STATE decision 03-04). Only runs against the denic registrar.
+
+name: denic_rri
+rfc: "DENIC RRI domain operations"
+matrix: [denic]
+
+steps:
+  - name: create
+    op: create_domain
+    params:
+      name: conformance.de
+      registrant: "DENIC-001"
+      period: 1
+    expect:
+      code: 1000
+
+  # op=request maps to TRANSIT per RRIAdapter.TransferDomain (STATE 03-04).
+  - name: transit
+    op: transfer_domain
+    params:
+      name: conformance.de
+      op: request
+      auth_info: "x"
+    expect:
+      code: 1000
+
+  # op=authinfo1 maps to CREATE-AUTHINFO1 (generates auth code with 5-day expiry).
+  - name: authinfo1
+    op: transfer_domain
+    params:
+      name: conformance.de
+      op: authinfo1
+    expect:
+      code: 1000
+
+  # op=authinfo2 maps to CREATE-AUTHINFO2 (incoming registrar redeems auth code).
+  - name: authinfo2
+    op: transfer_domain
+    params:
+      name: conformance.de
+      op: authinfo2
+    expect:
+      code: 1000
+
+  - name: info
+    op: info_domain
+    params:
+      name: conformance.de
+    expect:
+      code: 1000
+
+  - name: delete
+    op: delete_domain
+    params:
+      name: conformance.de
+    expect:
+      code: 1000

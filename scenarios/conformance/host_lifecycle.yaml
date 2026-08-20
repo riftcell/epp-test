@@ -1,0 +1,39 @@
+# CONF-03: Standard host (nameserver) lifecycle conformance scenario.
+# Validates RFC 5732 §3.2 host operations: create, info, update, delete.
+
+name: host_lifecycle
+rfc: "RFC 5732 §3.2"
+matrix: [internetx, nicat, eurid]
+
+steps:
+  - name: create_host
+    op: create_host
+    params:
+      name: ns1.conformance.example
+      addrs: ["192.0.2.1"]
+    expect:
+      code: 1000
+
+  - name: info_host
+    op: info_host
+    params:
+      name: ns1.conformance.example
+    expect:
+      code: 1000
+      fields:
+        Name: ns1.conformance.example
+
+  - name: update_host
+    op: update_host
+    params:
+      name: ns1.conformance.example
+      add_addrs: ["192.0.2.2"]
+    expect:
+      code: 1000
+
+  - name: delete_host
+    op: delete_host
+    params:
+      name: ns1.conformance.example
+    expect:
+      code: 1000

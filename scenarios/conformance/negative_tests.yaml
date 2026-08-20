@@ -1,0 +1,45 @@
+# CONF-07: Negative test scenarios with expected EPP error codes.
+# Validates RFC 5730 §3 result codes: 2302 (object exists), 2303 (object does not exist),
+# 2201 (authorization error), 2306 (parameter value policy error).
+
+name: negative_tests
+rfc: "RFC 5730 §3 result codes"
+matrix: [internetx, nicat, eurid]
+
+steps:
+  # 2302: object exists — attempt to create a domain that already exists.
+  - name: duplicate_create
+    op: create_domain
+    params:
+      name: exists.example
+      registrant: "C-1"
+      period: 1
+    expect:
+      code: 2302
+
+  # 2303: object does not exist — info on a non-existent domain.
+  - name: not_found_info
+    op: info_domain
+    params:
+      name: nonexistent.example
+    expect:
+      code: 2303
+
+  # 2201: authorization error — update without proper authorization.
+  - name: auth_error
+    op: update_domain
+    params:
+      name: exists.example
+      add_statuses: [clientHold]
+    expect:
+      code: 2201
+
+  # 2306: parameter value policy error — registration period exceeds policy maximum.
+  - name: bad_param
+    op: create_domain
+    params:
+      name: "valid.example"
+      registrant: "C-1"
+      period: 999
+    expect:
+      code: 2306

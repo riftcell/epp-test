@@ -1,0 +1,24 @@
+# CONF-06: Fault tolerance conformance scenario.
+# Validates RFC 5730 fault tolerance: the client must not panic when it receives a
+# malformed frame from the server.
+#
+# How this works: the test harness (conformance_test.go TestFaultTolerance) injects
+# a MalformedFrameFault via MockEPPServer.Expect before calling RunScenario (or the
+# adapter directly). The server sends an invalid frame header (length=1, below the
+# minimum valid EPP frame size of 4), which must cause the adapter's ReadFrame to
+# return a non-nil error — not a panic.
+#
+# There is NO expect block on the step below because a malformed frame produces a
+# non-EPP Go error (io.ErrUnexpectedEOF or similar), not an EPP result code. An
+# expect.code assertion would not match, and the pass-if-no-panic semantics require
+# the runner to tolerate any returned error here. The harness asserts non-nil error
+# and no panic at the Go test level.
+
+name: fault_tolerance
+rfc: "RFC 5730 fault tolerance"
+
+steps:
+  - name: fault_check
+    op: check_domain
+    params:
+      names: [fault.example]
