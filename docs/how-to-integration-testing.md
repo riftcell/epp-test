@@ -159,7 +159,7 @@ OT&E accounts for InternetX, NiCAT, EURid, and DENIC must be requested from each
 
 ## Docker Compose: Mock Server + Client Tests
 
-The following illustrative `docker-compose.yaml` runs the standalone mock servers from the Dockerfile's `mock-servers` stage (static binaries on `scratch`; no Go toolchain in the image) next to your client under test. The servers bind `0.0.0.0` inside the container so other services can reach them.
+The following illustrative `docker-compose.yaml` runs the standalone mock servers from the Dockerfile's `mock-servers` stage (static binaries on `scratch`; no Go toolchain in the image; published as `riftcell/epp-mock`) next to your client under test. The servers bind `0.0.0.0` inside the container so other services can reach them.
 
 ```yaml
 services:

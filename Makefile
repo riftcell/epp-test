@@ -88,7 +88,7 @@ docker-selftest:
 # Build the standalone mock servers image (scratch, static binaries) used by the
 # Docker Compose example in docs/how-to-integration-testing.md.
 docker-mock-servers:
-	docker build --target mock-servers -t epp-test-mock-servers .
+	docker build --target mock-servers -t riftcell/epp-mock:latest .
 
 # Run the standalone mock EPP server (TLS, 127.0.0.1:7700) for manual integration testing.
 # Use -addr to change the listen address: make mock-epp-server ARGS="-addr 0.0.0.0:7700"
