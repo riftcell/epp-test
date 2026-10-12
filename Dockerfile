@@ -1,6 +1,6 @@
 # Stage 1: builder — compile a static conformance test binary (CGO_ENABLED=0)
-# Uses golang:1.25-alpine to match go.mod's declared go 1.25 minimum.
-FROM golang:1.25-alpine AS builder
+# Uses golang:1.26-alpine to match go.mod's declared go 1.26 minimum.
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /build
 
@@ -29,7 +29,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" \
 # Stage 2: selftest — run the full unit suite (all packages) inside the container.
 # Keeps the Go toolchain so `go test ./...` can run without a host Go installation.
 # Used by `make docker-selftest`; not the production conformance image.
-FROM golang:1.25-alpine AS selftest
+FROM golang:1.26-alpine AS selftest
 
 WORKDIR /build
 # Separate COPY so `go mod download` layer is cached when only source changes.

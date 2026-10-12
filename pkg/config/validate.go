@@ -28,6 +28,6 @@ func validate(cfg *Config) error {
 			errs = append(errs, fmt.Errorf("%s.password: required", prefix))
 		}
 	}
-	// errors.Join requires Go 1.20+. go.mod declares go 1.25 so this is available.
+	// errors.Join requires Go 1.20+. go.mod declares go 1.26 so this is available.
 	return errors.Join(errs...)
 }

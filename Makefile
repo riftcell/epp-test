@@ -65,7 +65,7 @@ build:
 tidy:
 	go mod tidy
 
-# Build the Docker image (multi-stage: golang:1.25-alpine builder → scratch runtime).
+# Build the Docker image (multi-stage: golang:1.26-alpine builder → scratch runtime).
 # Produces a static conformance test binary with zero runtime dependencies (CICD-01).
 docker-build:
 	docker build -t epp-test .

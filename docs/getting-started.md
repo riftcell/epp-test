@@ -4,7 +4,7 @@ This guide walks you from a clean machine to a passing `go test -tags unit ./...
 
 ## Prerequisites
 
-- **Go 1.25 or later.** Check with `go version`. The framework uses generics and standard library features added in 1.20+; 1.25 is the minimum declared in `go.mod`.
+- **Go 1.26.9 or later.** Check with `go version`. The framework uses generics and standard library features added in 1.20+; 1.26.9 is the minimum declared in `go.mod`.
 - No other system dependencies. The framework compiles as a fully static binary (`CGO_ENABLED=0`). No C libraries, no database, no external runtime.
 
 ## Install / Module Setup

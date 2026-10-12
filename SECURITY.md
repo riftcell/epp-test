@@ -95,11 +95,11 @@ Audit results (SEC-02, 2026-06-29):
 
 ## Dependency Vulnerabilities
 
-**govulncheck version:** v1.5.0
-**Scan date:** 2026-08-20
-**Go version at scan:** go1.25.13
-**golang.org/x/net version at scan:** v0.56.0
-**golang.org/x/text version at scan:** v0.39.0
+**govulncheck version:** v1.9.0
+**Scan date:** 2026-10-12
+**Go version at scan:** go1.26.9
+**golang.org/x/net version at scan:** v0.60.0
+**golang.org/x/text version at scan:** v0.42.0
 
 **Result: No known vulnerabilities found.**
 
@@ -130,7 +130,14 @@ remediated:
   records in `golang.org/x/net/dns/dnsmessage`, not reachable by this codebase's call
   graph but present in the required module — fixed by upgrading v0.55.0 -> v0.56.0.
 
-No CVEs were accepted or deferred. All 20 (14 baseline + 6 follow-up) have been remediated.
+A 2026-10-12 scan found further stdlib and `golang.org/x/net` CVEs after the go1.25 line
+reached end of support (fixes ship only in go1.26.9), including GO-2026-6617, GO-2026-6613,
+GO-2026-6612, GO-2026-6611 and GO-2026-6603 (`net/http` / HTTP/2), GO-2026-6608
+(`net/textproto`), GO-2026-6607 (`crypto/tls` ECH) and GO-2026-6600 (`html/template`). All
+remediated by raising the Go toolchain from go1.25.13 to go1.26.9 and upgrading
+`golang.org/x/net` v0.56.0 -> v0.60.0 (which also moved `golang.org/x/text` to v0.42.0).
+
+No CVEs were accepted or deferred.
 
 ---
 

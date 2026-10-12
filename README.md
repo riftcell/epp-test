@@ -85,4 +85,4 @@ Unit test reports (`junit.xml`, `report.json`, `report.txt`, `report.html`) are 
 github.com/riftcell/epp-test
 ```
 
-Requires Go 1.25 or later.
+Requires Go 1.26.9 or later.
