@@ -7,7 +7,7 @@ This guide explains the three testing tiers available in the EPP Test Framework.
 | Tier | Command | Network | Credentials | What it validates |
 |------|---------|---------|-------------|-------------------|
 | 1 — In-process unit tests | `go test -tags unit ./...` | None (offline) | None | Protocol framing, adapter logic, scenario runner, all EPP operations |
-| 2 — Standalone simulated server | `make mock-epp-server` / `make mock-rri-server` | Loopback only | None | Client wire framing, TLS handshake, connect flow, error handling (via fault injection) |
+| 2 — Standalone simulated server | `make mock-epp-server` / `make mock-rri-server` or `docker run riftcell/epp-mock` | Loopback only | None | Client wire framing, TLS handshake, connect flow, error handling (via fault injection) |
 | 3 — Real OT&E integration | `go test -tags integration ./...` | Internet | Required | End-to-end EPP operations against live OT&E endpoints |
 
 ---
@@ -48,6 +48,8 @@ See [Getting Started](getting-started.md) for a full walkthrough.
 ## Tier 2: Standalone Simulated Server
 
 A long-running mock server runs as a separate OS process. Your client connects to it over loopback — exactly like a real server, but with no credentials and no OT&E account needed.
+
+> **Client not written in Go?** Run the servers from the `riftcell/epp-mock` Docker image instead. [How-To: Docker Mock](how-to-docker-mock.md) covers the `docker run` commands, wire framing, TLS settings and PHP examples.
 
 ### Starting the Servers
 
@@ -98,7 +100,7 @@ import (
     "crypto/tls"
     "testing"
 
-    epp "github.com/riftcell/epp-test/pkg/adapter/epp"
+    epp "github.com/riftcell/epp-test/pkg/registrar/epp"
     "github.com/riftcell/epp-test/pkg/registrar"
 )
 
@@ -183,6 +185,8 @@ services:
 ```
 
 The mock server's certificate is regenerated on every start and is self-signed, so the client must either skip verification or trust the cert obtained from the first handshake. Fault-injection flags (see [Fault Injection](#fault-injection)) can be appended to `command`, e.g. `["-addr", "0.0.0.0:7700", "-san", "mock-epp", "--login-mode=flap"]`.
+
+See [How-To: Docker Mock](how-to-docker-mock.md) for the wire protocol details and example client code.
 
 This setup is useful for validating wire framing in a containerized CI environment without an OT&E account.
 

@@ -19,11 +19,24 @@ cp configs/epp-test.example.yaml epp-test.yaml
 go test -tags unit ./...
 ```
 
+### Testing a non-Go client (PHP, Python, Java, …)
+
+No Go needed: run the mock servers from Docker and point your client at them.
+
+```sh
+docker run --rm -p 7700:7700 riftcell/epp-mock:latest                     # EPP over TLS
+docker run --rm -p 7701:7701 --entrypoint /mock-rri-server \
+  riftcell/epp-mock:latest -addr 0.0.0.0:7701                              # DENIC RRI over TCP
+```
+
+See [How-To: Docker Mock](docs/how-to-docker-mock.md) for wire framing, TLS settings, working PHP examples and what the mock returns.
+
 ## Documentation
 
 | Guide | Description |
 | ----- | ----------- |
 | [Getting Started](docs/getting-started.md) | Install, configure, and run your first test in under 10 minutes |
+| [How-To: Docker Mock](docs/how-to-docker-mock.md) | Test a client in any language (e.g. PHP) against the `riftcell/epp-mock` image |
 | [How-To: Domains](docs/how-to-domains.md) | Domain lifecycle: check, create, info, update, renew, transfer, delete |
 | [How-To: Contacts](docs/how-to-contacts.md) | Contact lifecycle: create, info, update, delete, domain association |
 | [How-To: Hosts](docs/how-to-hosts.md) | Host lifecycle: create subordinate nameserver, info, update glue, delete |
@@ -44,6 +57,7 @@ go test -tags unit ./...
 | `go test ./...` | Compile-time assertions only (no network, no mock servers) |
 | `go test -tags unit ./...` | Full unit suite using in-process mock servers (offline, fast) |
 | `make mock-epp-server` / `make mock-rri-server` | Long-running mock server in a separate process for manual integration testing |
+| `docker run -p 7700:7700 riftcell/epp-mock:latest` | Same mock server from Docker, for clients in any language (see [Docker Mock](docs/how-to-docker-mock.md)) |
 | `go test -tags integration ./...` | Integration suite against OT&E endpoints (requires credentials) |
 
 See [How-To: Integration Testing](docs/how-to-integration-testing.md) for a detailed walkthrough of all three tiers, including Docker Compose examples.

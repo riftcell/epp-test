@@ -8,7 +8,9 @@ See [Getting Started](getting-started.md) for setup instructions and [Config Ref
 
 ## RRI Protocol Background
 
-RRI is a line-oriented key:value protocol over plain TCP (not TLS from the client's perspective — DENIC terminates TLS at their gateway). Each RRI request and response consists of a version line, an action line, and zero or more `key:value` pairs, terminated by a blank line. There is no XML.
+RRI is a line-oriented key:value protocol over plain TCP (not TLS from the client's perspective — DENIC terminates TLS at their gateway). Each RRI request and response consists of a version line, an action line, and zero or more `key:value` pairs. There is no XML.
+
+**Framing:** each message is preceded by a 4-byte big-endian length header that counts the body only (unlike EPP, whose header also counts its own 4 bytes). See [How-To: Docker Mock](how-to-docker-mock.md#wire-protocol-essentials) for a side-by-side comparison and a PHP example.
 
 **Password hashing:** DENIC RRI requires passwords to be transmitted as lowercase MD5 hex digests, not plaintext. The `RRIAdapter` calls `md5Hex(password)` before sending the `LOGIN` command. Do not bypass this — the `go-rriclient` library handles the hash, but the adapter pre-hashes to prevent double-hashing on reconnect.
 

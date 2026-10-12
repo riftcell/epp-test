@@ -2,6 +2,8 @@
 
 The standalone mock servers (`mock-epp-server` and `mock-rri-server`) support configurable fault simulation to verify that your EPP or RRI client library handles failure conditions correctly. Faults are configured via CLI flags for simple one-liner cases, or via a YAML fault profile for multi-rule scenarios — and explicitly-set CLI flags always override the corresponding YAML values (D-01).
 
+> **Using Docker?** Every `go run ./cmd/mock-epp-server` example below works with the `riftcell/epp-mock` image. Replace the `go run` prefix with `docker run --rm -p 7700:7700 riftcell/epp-mock:latest -addr 0.0.0.0:7700`, then add the flags. For RRI, use `docker run --rm -p 7701:7701 --entrypoint /mock-rri-server riftcell/epp-mock:latest -addr 0.0.0.0:7701`. To use a YAML fault profile, mount it into the container, e.g. `-v "$PWD/fault-profile.yaml:/fault-profile.yaml:ro"`, and pass `--fault-profile=/fault-profile.yaml`. See [How-To: Docker Mock](how-to-docker-mock.md).
+
 ## Quick Start
 
 ```bash
