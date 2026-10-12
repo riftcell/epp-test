@@ -1,4 +1,4 @@
-.PHONY: all test test-unit test-integration vet fmt lint lint-fix govulncheck build tidy clean docker-build docker-run docker-test docker-selftest mock-epp-server mock-rri-server
+.PHONY: all test test-unit test-integration vet fmt lint lint-fix govulncheck build tidy clean docker-build docker-run docker-test docker-selftest docker-mock-servers mock-epp-server mock-rri-server
 
 all: lint vet test-unit build
 
@@ -68,12 +68,12 @@ tidy:
 # Build the Docker image (multi-stage: golang:1.25-alpine builder → scratch runtime).
 # Produces a static conformance test binary with zero runtime dependencies (CICD-01).
 docker-build:
-	docker build -t epp-test-framework .
+	docker build -t epp-test .
 
 # Run the conformance suite inside the Docker image.
 # Expects no Go toolchain on the host — the binary is self-contained.
 docker-run:
-	docker run --rm epp-test-framework
+	docker run --rm epp-test
 
 # Build and immediately run (convenience target for CI and local verification).
 docker-test: docker-build docker-run
@@ -82,8 +82,13 @@ docker-test: docker-build docker-run
 # Uses the `selftest` stage which keeps the Go toolchain — image is larger (~300 MB)
 # but runs `go test -tags unit ./...` across every package without needing Go on the host.
 docker-selftest:
-	docker build --target selftest -t epp-test-framework-selftest .
-	docker run --rm epp-test-framework-selftest
+	docker build --target selftest -t epp-test-selftest .
+	docker run --rm epp-test-selftest
+
+# Build the standalone mock servers image (scratch, static binaries) used by the
+# Docker Compose example in docs/how-to-integration-testing.md.
+docker-mock-servers:
+	docker build --target mock-servers -t epp-test-mock-servers .
 
 # Run the standalone mock EPP server (TLS, 127.0.0.1:7700) for manual integration testing.
 # Use -addr to change the listen address: make mock-epp-server ARGS="-addr 0.0.0.0:7700"

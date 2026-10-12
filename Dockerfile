@@ -19,6 +19,13 @@ RUN CGO_ENABLED=0 GOOS=linux go test -c -tags unit \
     -o /conformance.test \
     ./scenarios/conformance/
 
+# Also compile the standalone mock servers as static binaries for the
+# mock-servers stage below (used by the Docker Compose integration example).
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" \
+    -o /mock-epp-server ./cmd/mock-epp-server && \
+    CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" \
+    -o /mock-rri-server ./cmd/mock-rri-server
+
 # Stage 2: selftest — run the full unit suite (all packages) inside the container.
 # Keeps the Go toolchain so `go test ./...` can run without a host Go installation.
 # Used by `make docker-selftest`; not the production conformance image.
@@ -32,7 +39,19 @@ COPY . .
 
 CMD ["go", "test", "-tags", "unit", "-count=1", "-v", "./..."]
 
-# Stage 3: runtime — scratch means zero OS overhead, truly static binary.
+# Stage 3: mock-servers — standalone mock EPP (TLS :7700) and RRI (:7701) servers.
+# Build with `--target mock-servers`. Defaults to the EPP server; override the
+# entrypoint with /mock-rri-server for RRI. Binds 0.0.0.0 so other containers can reach it.
+FROM scratch AS mock-servers
+
+COPY --from=builder /mock-epp-server /mock-epp-server
+COPY --from=builder /mock-rri-server /mock-rri-server
+
+EXPOSE 7700 7701
+ENTRYPOINT ["/mock-epp-server"]
+CMD ["-addr", "0.0.0.0:7700"]
+
+# Stage 4: runtime (default target, must stay last) — scratch means zero OS overhead, truly static binary.
 # No shell, no libc, no Go toolchain at runtime (CICD-01 / INFRA-03).
 FROM scratch
 

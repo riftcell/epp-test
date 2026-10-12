@@ -159,23 +159,30 @@ OT&E accounts for InternetX, NiCAT, EURid, and DENIC must be requested from each
 
 ## Docker Compose: Mock Server + Client Tests
 
-The following illustrative `docker-compose.yaml` shows how to run the standalone mock server and a client-under-test as separate services. Bind `0.0.0.0` inside the container so the mock server is reachable by the client service.
+The following illustrative `docker-compose.yaml` runs the standalone mock servers from the Dockerfile's `mock-servers` stage (static binaries on `scratch`; no Go toolchain in the image) next to your client under test. The servers bind `0.0.0.0` inside the container so other services can reach them.
 
 ```yaml
 services:
   mock-epp:
-    build: .            # uses the project Dockerfile
-    command: ["go", "run", "./cmd/mock-epp-server", "-addr", "0.0.0.0:7700"]
+    build: { context: ., target: mock-servers }
+    # -san adds the service name to the self-signed cert, so clients dialing
+    # "mock-epp" pass hostname verification (default SANs: localhost, 127.0.0.1).
+    command: ["-addr", "0.0.0.0:7700", "-san", "mock-epp"]
     ports: ["7700:7700"]
 
+  mock-rri:
+    build: { context: ., target: mock-servers }
+    entrypoint: ["/mock-rri-server"]
+    command: ["-addr", "0.0.0.0:7701"]
+    ports: ["7701:7701"]
+
   client-tests:
-    build: .
-    depends_on: [mock-epp]
-    environment:
-      EPP_HOST: mock-epp
-      EPP_PORT: "7700"
-    command: ["go", "test", "./..."]
+    image: your-client-under-test   # replace with your EPP client's test image
+    depends_on: [mock-epp, mock-rri]
+    # Point your client at mock-epp:7700 (EPP over TLS) and mock-rri:7701 (RRI).
 ```
+
+The mock server's certificate is regenerated on every start and is self-signed, so the client must either skip verification or trust the cert obtained from the first handshake. Fault-injection flags (see [Fault Injection](#fault-injection)) can be appended to `command`, e.g. `["-addr", "0.0.0.0:7700", "-san", "mock-epp", "--login-mode=flap"]`.
 
 This setup is useful for validating wire framing in a containerized CI environment without an OT&E account.
 

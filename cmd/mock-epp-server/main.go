@@ -9,6 +9,7 @@
 //
 //	go run ./cmd/mock-epp-server
 //	go run ./cmd/mock-epp-server -addr 0.0.0.0:7700
+//	go run ./cmd/mock-epp-server -addr 0.0.0.0:7700 -san mock-epp
 package main
 
 import (
@@ -93,6 +94,7 @@ func main() {
 	disconnectAfter := flag.Int("disconnect-after", 0, "close after N operations, 0=disabled [D-04]")
 	malformedFrame := flag.String("malformed-frame", "", "length_overflow|invalid_xml|garbage [D-07]")
 	faultMismatch := flag.String("fault-mismatch", "", "op substring for mismatch response (e.g. domain:create) [D-08]")
+	san := flag.String("san", "", "comma-separated extra cert SANs (hostnames or IPs), e.g. a Docker Compose service name")
 	flag.Parse()
 
 	profile, err := loadFaultProfile(
@@ -105,7 +107,7 @@ func main() {
 		log.Fatalf("mock-epp-server: %v", err)
 	}
 
-	cert, err := genSelfSignedCert()
+	cert, err := genSelfSignedCert(splitSANs(*san))
 	if err != nil {
 		log.Fatalf("mock-epp-server: generate cert: %v", err)
 	}
@@ -146,10 +148,22 @@ func main() {
 	}
 }
 
+// splitSANs parses the -san flag value into a list of non-empty entries.
+func splitSANs(v string) []string {
+	var out []string
+	for _, s := range strings.Split(v, ",") {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 // genSelfSignedCert generates a self-signed ECDSA P-256 server certificate.
 // SANs include 127.0.0.1 (IP) and localhost (DNS) so that TLS clients can
-// verify the cert when connecting via either address.
-func genSelfSignedCert() (tls.Certificate, error) {
+// verify the cert when connecting via either address. extraSANs adds further
+// entries (IPs or DNS names), e.g. the service name when running in Docker Compose.
+func genSelfSignedCert(extraSANs []string) (tls.Certificate, error) {
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("generate key: %w", err)
@@ -167,6 +181,13 @@ func genSelfSignedCert() (tls.Certificate, error) {
 		// Self-signed: IsCA allows signing its own cert directly.
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+	}
+	for _, s := range extraSANs {
+		if ip := net.ParseIP(s); ip != nil {
+			tmpl.IPAddresses = append(tmpl.IPAddresses, ip)
+		} else {
+			tmpl.DNSNames = append(tmpl.DNSNames, s)
+		}
 	}
 
 	certDER, err := x509.CreateCertificate(rand.Reader, tmpl, tmpl, &key.PublicKey, key)
