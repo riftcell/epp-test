@@ -168,14 +168,12 @@ If a type needs a logger, clock, or other collaborator, pass it through the cons
 // CORRECT — test can pass a mock registrar
 func TestDomainLifecycle(t *testing.T) {
     reg := newStubRegistrar(t)
-    runner := runner.New(reg)
-    ...
+    runner.RunScenario(t, "domain_lifecycle.yaml", reg)
 }
 
 // WRONG — test cannot substitute the real registrar
 func TestDomainLifecycle(t *testing.T) {
-    runner := runner.New(globalRegistrar) // package-level global
-    ...
+    runner.RunScenario(t, "domain_lifecycle.yaml", globalRegistrar) // package-level global
 }
 ```
 

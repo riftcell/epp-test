@@ -145,8 +145,9 @@ EPP_REGISTRARS_INTERNETX_PASSWORD=secret \
 For the full matrix, use `runner.RunMatrix` in your test file:
 
 ```go
-//go:build unit
-
+// regs maps each registrar name to its adapter, e.g.
+// map[string]registrar.Registrar{"internetx": ix, "nicat": nc, "eurid": eu}.
+// Each subtest runs only if its key appears in the scenario's matrix: list.
 func TestDomainLifecycle(t *testing.T) {
     runner.RunMatrix(t, "domain_lifecycle.yaml", regs)
 }

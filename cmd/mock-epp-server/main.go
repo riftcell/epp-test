@@ -28,6 +28,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -38,6 +39,15 @@ import (
 )
 
 var svTRIDCounter atomic.Int64
+
+// EPP command elements may carry any namespace prefix (<login>, <epp:login>, ...),
+// so match on the local name rather than a literal tag.
+var (
+	helloRe  = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?hello[\s/>]`)
+	loginRe  = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?login[\s/>]`)
+	logoutRe = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?logout[\s/>]`)
+	clTRIDRe = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?clTRID>([^<]*)</`)
+)
 
 // loadFaultProfile loads a YAML fault profile from profilePath (if non-empty),
 // then applies any CLI flags that were explicitly set on the command line.
@@ -238,14 +248,18 @@ func handleConn(conn net.Conn, profile fault.FaultProfile) {
 	// Dispatch table for non-login, non-logout operations.
 	type handler struct {
 		needle  string
+		match   func(xmlStr string) bool
 		builder func(xmlStr string) []byte
 	}
+	contains := func(needle string) func(string) bool {
+		return func(s string) bool { return strings.Contains(s, needle) }
+	}
 	handlers := []handler{
-		{"<hello", func(_ string) []byte { return greeting() }},
-		{"domain:check", func(s string) []byte { return domainCheckResp(s) }},
-		{"domain:", func(s string) []byte { return resp1000(echoCltrid(s)) }},
-		{"contact:", func(s string) []byte { return resp1000(echoCltrid(s)) }},
-		{"host:", func(s string) []byte { return resp1000(echoCltrid(s)) }},
+		{"hello", helloRe.MatchString, func(_ string) []byte { return greeting() }},
+		{"domain:check", contains("domain:check"), func(s string) []byte { return domainCheckResp(s) }},
+		{"domain:", contains("domain:"), func(s string) []byte { return resp1000(echoCltrid(s)) }},
+		{"contact:", contains("contact:"), func(s string) []byte { return resp1000(echoCltrid(s)) }},
+		{"host:", contains("host:"), func(s string) []byte { return resp1000(echoCltrid(s)) }},
 	}
 
 	for {
@@ -256,8 +270,8 @@ func handleConn(conn net.Conn, profile fault.FaultProfile) {
 		xmlStr := string(body)
 
 		// Login frame: fault-aware path (D-03).
-		if strings.Contains(xmlStr, "<login") {
-			log.Printf("epp <- <login")
+		if loginRe.MatchString(xmlStr) {
+			log.Printf("epp <- login")
 			action, _ := engine.OnLoginAttempt(conn) //nolint:errcheck // OnLoginAttempt never returns a non-nil error; conn parameter is unused in current impl
 			switch action {
 			case fault.ActionHang:
@@ -283,8 +297,8 @@ func handleConn(conn net.Conn, profile fault.FaultProfile) {
 		}
 
 		// Logout: respond with 1500 and close (EPP server ends session per RFC 5730).
-		if strings.Contains(xmlStr, "<logout") {
-			log.Printf("epp <- <logout")
+		if logoutRe.MatchString(xmlStr) {
+			log.Printf("epp <- logout")
 			if err := frame.WriteFrame(conn, resp1500(echoCltrid(xmlStr))); err != nil {
 				log.Printf("mock-epp-server: write logout: %v", err)
 			}
@@ -319,7 +333,7 @@ func handleConn(conn net.Conn, profile fault.FaultProfile) {
 		} else {
 			matched := false
 			for _, h := range handlers {
-				if strings.Contains(xmlStr, h.needle) {
+				if h.match(xmlStr) {
 					log.Printf("epp <- %s", h.needle)
 					respBytes = h.builder(xmlStr)
 					matched = true
@@ -372,18 +386,10 @@ func greeting() []byte {
 // echoCltrid extracts the clTRID value from an EPP XML request.
 // Returns an empty string if no clTRID is present.
 func echoCltrid(xmlStr string) string {
-	const openTag = "<clTRID>"
-	const closeTag = "</clTRID>"
-	start := strings.Index(xmlStr, openTag)
-	if start == -1 {
-		return ""
+	if m := clTRIDRe.FindStringSubmatch(xmlStr); m != nil {
+		return m[1]
 	}
-	start += len(openTag)
-	end := strings.Index(xmlStr[start:], closeTag)
-	if end == -1 {
-		return ""
-	}
-	return xmlStr[start : start+end]
+	return ""
 }
 
 // resp1000 returns an EPP result 1000 (command completed successfully) frame body.

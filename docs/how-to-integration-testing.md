@@ -22,26 +22,8 @@ go test -tags unit ./...
 
 This is the default mode for CI. It covers all protocol logic and scenario steps without a network connection.
 
-```go
-//go:build unit
+The in-process mock is scripted: the test queues the greeting with `srv.InjectPoll(...)` and one response per command on `srv.Expect`, then drives the adapter. [Getting Started](getting-started.md#your-first-test) has a complete, runnable example, and [`scenarios/conformance/conformance_test.go`](../scenarios/conformance/conformance_test.go) shows how to run full YAML scenarios this way.
 
-package mytest_test
-
-import (
-    "testing"
-
-    "github.com/riftcell/epp-test/pkg/mock/epp"
-    "github.com/riftcell/epp-test/pkg/runner"
-)
-
-func TestDomainLifecycle(t *testing.T) {
-    srv := epp.NewMockEPPServer(t)
-    reg := srv.NewAdapter(t)
-    runner.RunScenario(t, "scenarios/conformance/domain_lifecycle.yaml", reg)
-}
-```
-
-See [Getting Started](getting-started.md) for a full walkthrough.
 
 ---
 
@@ -79,7 +61,7 @@ go run ./cmd/mock-rri-server -addr 0.0.0.0:7701
 - **TLS with no client-cert requirement.** The server generates a self-signed ECDSA P-256 certificate at startup. Any EPP client can connect by either trusting the printed cert or using `InsecureSkipVerify: true` for quick manual testing.
 - **Greeting sent immediately on connect.** Real EPP servers always speak first.
 - **Always-success responses.** Login, domain, contact, and host operations all return result code 1000. `domain:check` marks all queried names as available (`avail="1"`). Logout returns 1500 and closes the connection.
-- **Logs command types to stderr.** Watch for `epp <- domain:check`, `epp <- login`, etc.
+- **Logs command types to stderr.** Watch for `epp <- login`, `epp <- domain:check`, etc. (with Docker, `docker logs` shows them).
 
 ### RRI Server Behavior
 
@@ -100,21 +82,22 @@ import (
     "crypto/tls"
     "testing"
 
-    epp "github.com/riftcell/epp-test/pkg/registrar/epp"
-    "github.com/riftcell/epp-test/pkg/registrar"
+    "github.com/riftcell/epp-test/pkg/config"
+    "github.com/riftcell/epp-test/pkg/registrar/epp"
 )
 
 func TestAgainstStandaloneEPPServer(t *testing.T) {
-    cfg := registrar.RegistrarConfig{
+    cfg := config.RegistrarConfig{
         Host:     "127.0.0.1",
         Port:     7700,
         Username: "any-user",
         Password: "any-password",
-        TLSConfig: &tls.Config{
-            InsecureSkipVerify: true, //nolint:gosec // intentional for standalone mock
-        },
     }
-    reg, err := epp.NewGenericEPPAdapter(cfg)
+    reg, err := epp.NewGenericEPPAdapter("mock", cfg,
+        epp.WithTLSConfig(&tls.Config{
+            InsecureSkipVerify: true, //nolint:gosec // intentional for standalone mock
+        }),
+    )
     if err != nil {
         t.Fatalf("create adapter: %v", err)
     }
@@ -125,11 +108,13 @@ func TestAgainstStandaloneEPPServer(t *testing.T) {
         t.Fatalf("login: %v", err)
     }
     // The server always returns code 1000 — this validates wire framing and connect flow.
-    avail, err := reg.CheckDomain(ctx, "example.com")
+    results, err := reg.CheckDomain(ctx, "example.com")
     if err != nil {
         t.Fatalf("check domain: %v", err)
     }
-    t.Logf("example.com available: %v", avail)
+    for _, r := range results {
+        t.Logf("%s available: %v", r.Name, r.Available != nil && *r.Available)
+    }
 }
 ```
 

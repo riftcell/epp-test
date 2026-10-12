@@ -54,45 +54,55 @@ The framework is organized into four horizontal layers. Each layer depends only 
 
 Adding support for a new EPP-based registrar takes four steps.
 
-**Step 1: Create an adapter type that embeds `GenericEPPAdapter`.**
+**Step 1: Create a package with an adapter type that embeds `GenericEPPAdapter`.**
 
 ```go
-// pkg/registrar/epp/acme.go
+// pkg/registrar/acme/adapter.go
 
-package epp
+package acme
+
+import (
+    "fmt"
+
+    nbioxml "github.com/nbio/xml"
+
+    "github.com/riftcell/epp-test/pkg/config"
+    "github.com/riftcell/epp-test/pkg/registrar"
+    epp "github.com/riftcell/epp-test/pkg/registrar/epp"
+)
 
 // AcmeAdapter implements the Registrar interface for the Acme EPP registry.
 // It embeds GenericEPPAdapter; all standard EPP operations are inherited.
 type AcmeAdapter struct {
-    *GenericEPPAdapter
+    *epp.GenericEPPAdapter
 }
 
 // Compile-time assertion: AcmeAdapter must satisfy registrar.Registrar.
 var _ registrar.Registrar = (*AcmeAdapter)(nil)
 ```
 
-**Step 2: Write a constructor that configures extension hooks.**
+**Step 2: Write a constructor that passes the registrar's name and configures extension hooks.**
 
 ```go
-func NewAcmeAdapter(cfg config.RegistrarConfig, opts ...Option) (*AcmeAdapter, error) {
-    base, err := NewGenericEPPAdapter(cfg, opts...)
+func NewAcmeAdapter(cfg config.RegistrarConfig, opts ...epp.Option) (*AcmeAdapter, error) {
+    g, err := epp.NewGenericEPPAdapter("acme", cfg, opts...)
     if err != nil {
-        return nil, err
+        return nil, fmt.Errorf("acme adapter: %w", err)
     }
-    a := &AcmeAdapter{GenericEPPAdapter: base}
 
-    // Wire Acme-specific extension hook (if any).
+    // Wire Acme-specific extension hooks (if any).
     // Leave hooks nil if the registrar uses no proprietary extensions.
-    base.OnBuildDomainCreate = a.buildDomainCreateExt
-    return a, nil
+    g.OnBuildDomainCreate = buildDomainCreateExt
+    return &AcmeAdapter{g}, nil
+}
+
+// buildDomainCreateExt writes Acme's <extension> children for domain:create.
+func buildDomainCreateExt(req registrar.DomainCreateRequest, enc *nbioxml.Encoder) {
+    // Encode extension elements with enc; see pkg/registrar/eurid/adapter.go.
 }
 ```
 
-**Step 3: Return the registrar's canonical name.**
-
-```go
-func (a *AcmeAdapter) Name() string { return "acme" }
-```
+**Step 3: Use the canonical name consistently.** The name passed to `NewGenericEPPAdapter` (`"acme"`) is what the embedded `Name()` returns. It must match the registrar key in `epp-test.yaml` and the `matrix:` entries in scenario files. No `Name()` method of your own is needed.
 
 **Step 4: Add the new registrar key to `config/config.go` explicit `BindEnv` calls.**
 
@@ -100,7 +110,7 @@ In `Load()`, add `"acme"` to the `[]string{"internetx", "nicat", "eurid", "denic
 
 After these four steps, add `acme` to your `epp-test.yaml`, run `go test -tags unit ./...` to confirm the compile-time assertion passes, then write a scenario with `matrix: [acme]` and run it against the OT&E endpoint.
 
-**Templates to copy from:** `pkg/registrar/epp/internetx.go` (no hooks, thinnest possible adapter), `pkg/registrar/epp/nicat.go` (single hook), `pkg/registrar/epp/eurid.go` (three hooks covering five extension namespaces).
+**Templates to copy from:** `pkg/registrar/internetx/adapter.go` (no hooks, thinnest possible adapter), `pkg/registrar/nicat/adapter.go` (single hook), `pkg/registrar/eurid/adapter.go` (three hooks covering five extension namespaces).
 
 ## Key Design Decisions
 

@@ -96,7 +96,7 @@ For the unit suite, credentials in the YAML file are not validated against any l
 
 ## Your First Test
 
-Create a file `mytest_test.go` with the following content:
+Create a file `mytest_test.go` inside a package of this module with the following content. It starts an in-process mock EPP server, connects the generic EPP adapter to it over mutual TLS, and checks a domain:
 
 ```go
 //go:build unit
@@ -104,38 +104,90 @@ Create a file `mytest_test.go` with the following content:
 package mytest_test
 
 import (
+    "context"
+    "crypto/tls"
+    "net"
+    "strconv"
     "testing"
 
-    "github.com/riftcell/epp-test/pkg/mock/epp"
-    "github.com/riftcell/epp-test/pkg/runner"
+    "github.com/riftcell/epp-test/pkg/config"
+    mockepp "github.com/riftcell/epp-test/pkg/mock/epp"
+    "github.com/riftcell/epp-test/pkg/registrar/epp"
 )
 
-func TestDomainLifecycle(t *testing.T) {
-    // Start an in-process mock EPP server on a random port.
-    // t.Cleanup automatically closes the server when the test ends.
-    srv := epp.NewMockEPPServer(t)
+// The in-process mock is scripted: it sends exactly the frames the test queues,
+// in order. InjectPoll queues the greeting; Expect queues one response per command.
+const (
+    greetingXML = `<?xml version="1.0" encoding="UTF-8"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"><greeting><svID>Mock</svID><svDate>2026-01-01T00:00:00Z</svDate>
+<svcMenu><version>1.0</version><lang>en</lang><objURI>urn:ietf:params:xml:ns:domain-1.0</objURI></svcMenu></greeting></epp>`
+    loginOKXML = `<?xml version="1.0" encoding="UTF-8"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"><response><result code="1000"><msg>Command completed successfully</msg></result>
+<trID><svTRID>s-1</svTRID></trID></response></epp>`
+    checkAvailXML = `<?xml version="1.0" encoding="UTF-8"?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"><response><result code="1000"><msg>Command completed successfully</msg></result>
+<resData><domain:chkData xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+<domain:cd><domain:name avail="1">example.com</domain:name></domain:cd></domain:chkData></resData>
+<trID><svTRID>s-2</svTRID></trID></response></epp>`
+)
 
-    // Create an adapter pointing at the mock server.
-    reg := srv.NewAdapter(t)
+func TestCheckDomain(t *testing.T) {
+    // Start an in-process mock EPP server (mutual TLS) on a random port.
+    // t.Cleanup closes it automatically when the test ends.
+    srv := mockepp.NewMockEPPServer(t)
 
-    // Run the standard domain lifecycle conformance scenario.
-    runner.RunScenario(t, "scenarios/conformance/domain_lifecycle.yaml", reg)
+    // Trust the mock's CA and present a client certificate it signed.
+    clientCert, err := mockepp.GenerateClientCert(srv.CAKey, srv.CACert)
+    if err != nil {
+        t.Fatal(err)
+    }
+    tlsCfg := &tls.Config{Certificates: []tls.Certificate{clientCert}, RootCAs: srv.ClientPool, ServerName: "127.0.0.1"}
+
+    host, portStr, _ := net.SplitHostPort(srv.Addr())
+    port, _ := strconv.Atoi(portStr)
+    cfg := config.RegistrarConfig{Host: host, Port: port, Username: "u", Password: "p"}
+
+    reg, err := epp.NewGenericEPPAdapter("internetx", cfg, epp.WithTLSConfig(tlsCfg))
+    if err != nil {
+        t.Fatal(err)
+    }
+    t.Cleanup(func() { _ = reg.Close() })
+
+    // Script the session: greeting, login response, check response.
+    srv.InjectPoll([]byte(greetingXML))
+    srv.Expect <- []byte(loginOKXML)
+    srv.Expect <- []byte(checkAvailXML)
+
+    ctx := context.Background()
+    if err := reg.Login(ctx); err != nil {
+        t.Fatalf("login: %v", err)
+    }
+    results, err := reg.CheckDomain(ctx, "example.com")
+    if err != nil {
+        t.Fatalf("check: %v", err)
+    }
+    if len(results) != 1 || results[0].Available == nil || !*results[0].Available {
+        t.Fatalf("want example.com available, got %+v", results)
+    }
 }
 ```
 
-Then run the unit suite:
+Then run it:
 
 ```sh
-go test -tags unit ./...
+go test -tags unit -run TestCheckDomain -v ./path/to/your/package
 ```
 
 Expected output (trimmed):
 
 ```
-ok      github.com/riftcell/epp-test/...   0.123s
+--- PASS: TestCheckDomain (0.00s)
+ok      github.com/riftcell/epp-test/...   0.006s
 ```
 
-All tests pass. The scenario exercises `CheckDomain`, `CreateDomain`, `InfoDomain`, `UpdateDomain`, `RenewDomain`, `TransferDomain`, and `DeleteDomain` against the mock server without any network calls.
+**The in-process mock is scripted.** It sends exactly the frames your test queues, in order: `InjectPoll` queues the greeting, and each value sent to `srv.Expect` answers one command. If the client sends a command with nothing queued, the call blocks until it times out, so queue one response per command.
+
+To run a whole YAML scenario against the mock, queue one response per scenario step (including cleanup steps) and then call `runner.RunScenario(t, "domain_lifecycle.yaml", reg)`. [`scenarios/conformance/conformance_test.go`](../scenarios/conformance/conformance_test.go) does this for every conformance scenario and is the reference to copy from.
 
 ## Build Tags
 
