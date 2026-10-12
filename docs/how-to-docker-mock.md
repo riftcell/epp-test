@@ -85,7 +85,23 @@ The certificate is valid for `localhost` and `127.0.0.1`, plus any names given w
 
 ## PHP Examples
 
-Both scripts are tested against the image with PHP 8.3 (`php:8.3-cli`), with no extensions beyond the defaults. Run them with `php epp.php` and `php rri.php` while the containers are up.
+Both scripts are available as standalone files in [`docs/examples/php/`](examples/php/): [`epp.php`](examples/php/epp.php) and [`rri.php`](examples/php/rri.php). They are tested against the image with PHP 8.3 (`php:8.3-cli`) and need no extensions beyond the defaults. The listings below are copies of those files.
+
+Run them while the containers from [Start the Servers](#start-the-servers) are up:
+
+```sh
+php docs/examples/php/epp.php
+php docs/examples/php/rri.php
+```
+
+No local PHP? Run them in a container on the host network (Linux):
+
+```sh
+docker run --rm --network host -v "$PWD/docs/examples/php:/app:ro" -w /app php:8.3-cli php epp.php
+docker run --rm --network host -v "$PWD/docs/examples/php:/app:ro" -w /app php:8.3-cli php rri.php
+```
+
+Both scripts read `EPP_HOST`/`EPP_PORT` and `RRI_HOST`/`RRI_PORT` from the environment and default to `127.0.0.1:7700` and `127.0.0.1:7701`.
 
 ### EPP
 
