@@ -6,6 +6,25 @@ A Go test framework for EPP (Extensible Provisioning Protocol) client libraries,
 
 **Core value:** Give EPP client developers fast, reliable, locally-runnable tests that also work against real registrar environments. Write a scenario once; run it offline against a mock server or live against an OT&E endpoint by switching a config file.
 
+## Run the Mock Server with Docker
+
+No Go needed: run the mock servers from Docker and point your EPP or RRI client (PHP, Python, Java, …) at them.
+
+```sh
+# EPP over TLS on 127.0.0.1:7700
+docker run --rm -p 7700:7700 riftcell/epp-mock:latest
+
+# DENIC RRI over plain TCP on 127.0.0.1:7701
+docker run --rm -p 7701:7701 --entrypoint /mock-rri-server riftcell/epp-mock:latest -addr 0.0.0.0:7701
+
+# With a fault flag: repeat -addr, because passing arguments replaces the default CMD
+docker run --rm -p 7700:7700 riftcell/epp-mock:latest -addr 0.0.0.0:7700 --login-mode=always
+```
+
+> **Note:** any arguments after the image name replace the default `-addr 0.0.0.0:7700`, so always include `-addr 0.0.0.0:<port>` when you pass flags. Without it the server listens only on the container's loopback and the published port can't be reached.
+
+See [How-To: Docker Mock](docs/how-to-docker-mock.md) for wire framing, TLS settings, working PHP examples and what the mock returns.
+
 ## Quick Start
 
 ```sh
@@ -18,18 +37,6 @@ cp configs/epp-test.example.yaml epp-test.yaml
 # 3. Run the unit test suite
 go test -tags unit ./...
 ```
-
-### Testing a non-Go client (PHP, Python, Java, …)
-
-No Go needed: run the mock servers from Docker and point your client at them.
-
-```sh
-docker run --rm -p 7700:7700 riftcell/epp-mock:latest                     # EPP over TLS
-docker run --rm -p 7701:7701 --entrypoint /mock-rri-server \
-  riftcell/epp-mock:latest -addr 0.0.0.0:7701                              # DENIC RRI over TCP
-```
-
-See [How-To: Docker Mock](docs/how-to-docker-mock.md) for wire framing, TLS settings, working PHP examples and what the mock returns.
 
 ## Documentation
 
