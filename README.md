@@ -23,7 +23,7 @@ docker run --rm -p 7700:7700 riftcell/epp-mock:latest -addr 0.0.0.0:7700 --login
 
 > **Note:** any arguments after the image name replace the default `-addr 0.0.0.0:7700`, so always include `-addr 0.0.0.0:<port>` when you pass flags. Without it the server listens only on the container's loopback and the published port can't be reached.
 
-See [How-To: Docker Mock](docs/how-to-docker-mock.md) for wire framing, TLS settings, working PHP examples and what the mock returns.
+See [How-To: Docker Mock](docs/how-to-docker-mock.md) for wire framing, TLS settings and what the mock returns. Ready-to-run PHP clients are in [`docs/examples/php/`](docs/examples/php/).
 
 ## Quick Start
 

@@ -21,6 +21,15 @@ go run ./cmd/mock-epp-server --fault-profile=fault-profile.yaml
 
 ## CLI Flags Reference
 
+### Server Flags (not faults)
+
+| Flag | Server | Default | Description |
+|------|--------|---------|-------------|
+| `-addr=<host:port>` | EPP, RRI | EPP `127.0.0.1:7700`, RRI `127.0.0.1:7701` | Listen address. Use `0.0.0.0:<port>` inside Docker so the published port is reachable. |
+| `-san=<names>` | EPP | `""` | Comma-separated extra hostnames or IPs for the self-signed certificate (always valid for `localhost` and `127.0.0.1`), e.g. a Docker Compose service name. |
+
+With the `riftcell/epp-mock` image, the default command is `-addr 0.0.0.0:7700`. Passing any arguments replaces it, so repeat `-addr` when you add fault flags.
+
 ### EPP Server (8 fault flags)
 
 | Flag | Default | Description |
@@ -45,7 +54,7 @@ go run ./cmd/mock-epp-server --fault-profile=fault-profile.yaml
 | `--response-delay=<dur>` | `""` | Sleep before every non-login response (e.g. `200ms`) |
 | `--disconnect-after=<N>` | `0` | Close connection after N operations; `0` = disabled |
 
-Note: `--malformed-frame` and `--fault-mismatch` are EPP-only and are **not available on the RRI server**. RRI is newline-delimited text with no binary framing, so frame-level corruption faults do not apply. RRI `RESULT: success` responses have no resource name field, so logical mismatch faults do not apply (D-07, D-08).
+Note: `--malformed-frame` and `--fault-mismatch` are EPP-only and are **not available on the RRI server**. Frame corruption faults are implemented only for EPP's XML frames; the RRI server always writes well-formed `key: value` bodies behind its 4-byte length header. RRI `RESULT: success` responses have no resource name field, so logical mismatch faults do not apply (D-07, D-08).
 
 ---
 
