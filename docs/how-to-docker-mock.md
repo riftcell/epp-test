@@ -16,7 +16,7 @@ docker run --rm -p 7701:7701 --entrypoint /mock-rri-server riftcell/epp-mock:lat
 
 Your client connects to `127.0.0.1:7700` (EPP) or `127.0.0.1:7701` (RRI). Use any username and password: the mock accepts all credentials. Each server logs the commands it receives to stderr, so `docker logs` shows what your client sent.
 
-Use the tag `v1.0` instead of `latest` to pin a version. To build the image from source, run `make docker-mock-servers`.
+Use the tag `v1.1.1` instead of `latest` to pin a version. To build the image from source, run `make docker-mock-servers`.
 
 ### Passing Flags
 
